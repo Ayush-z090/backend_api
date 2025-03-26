@@ -3,13 +3,12 @@ from flask import Flask,request,jsonify,make_response
 from pymongo import MongoClient
 from dotenv import find_dotenv,load_dotenv
 from pprint import pprint
-from flask_cors import CORS
 from bson.json_util import dumps,loads
 import datetime
 from flask_cors import CORS
 
 from flask_jwt_extended import (
-    set_access_cookies,JWTManager, create_access_token, get_jwt_identity, jwt_required
+    unset_jwt_cookies,JWTManager, create_access_token, get_jwt_identity, jwt_required
 )
 
 # find and load the .env variable here
@@ -29,9 +28,8 @@ app.config.from_mapping(
     JWT_SECRET_KEY ="testing one",
     JWT_TOKEN_LOCATION=["cookies"] ,
     JWT_ACCESS_COOKIE_NAME="access_token_cookie",
-    JWT_COOKIE_SECURE=False,
     JWT_COOKIE_CSRF_PROTECT=False,
-    JWT_COOKIE_SAMESITE="None"
+    JWT_COOKIE_SAMESITE="None",
 )
 
 # accessing the env variable
@@ -149,7 +147,7 @@ def login():
                  "name":user["name"]
                  }))
         
-        response.set_cookie("access_token_cookie",access_token,httponly=True,secure=True,samesite="None",max_age=3600 *1000)
+        response.set_cookie("access_token_cookie",access_token,httponly=True,secure=True,samesite="None",max_age=3600)
         return response
 
     else:
@@ -182,7 +180,7 @@ def update():
     return jsonify({"message":"wrong requess","status":"error"})
 
 @app.route('/read',methods=["GET","POST"])
-@jwt_required(optional=True)
+@jwt_required()
 def info():
     data=get_jwt_identity()
     parseData = loads(data)
@@ -200,15 +198,25 @@ def info():
         return dumps({"message":"miketsting","val":userReadData})
 
 
+
+@app.route("/logout")
+def logout():
+    access_token= ""
+    response = make_response({"message":"usr logout succefully","status":"OK"}) 
+    response.set_cookie("access_token_cookie",access_token,httponly=True,secure=True,samesite="None",max_age=0)
+    # unset_jwt_cookies(res)
+    return response
+
+
 # ...........glbal call............
 
 @jwt.invalid_token_loader
 def invalid_token_callback(reason):
-    return jsonify({"msg": "Invalid token", "reason": reason}), 422
+    return jsonify({"message": "Invalid token", "reason": reason}),400
 
 @jwt.unauthorized_loader
 def missing_token_callback(reason):
-    return jsonify({"msg": "Missing token", "reason": reason}), 422
+    return jsonify({"message": "Missing token", "reason": reason}),400
 
 
 
