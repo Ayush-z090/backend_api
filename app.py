@@ -67,21 +67,9 @@ def insert_user():
 
         # check if userRole is valid collection or not and whether the user is alreafy in that database collection
         if userRole == "Students" and not db[userRole].find_one({"dataUserId":userData["dataUserId"]}):
-            # need to add extra data to user for future development
-            extraStu_data = {
-                            "attendance_status":{
-                                                    "M":"",
-                                                    "E":""
-                                                },
-                            "totall_attendance":{
-                                                    "M":0,
-                                                    "E":0,
-                                                    "days":0},
-                                "sessional_year": None
-                            }
-            
+            print("students",userData)
             # inserting userdata from fetch and the extradata in a single dict using asterrxk operater to expand or spread the key value pairs
-            db[userRole].insert_one({**userData,**extraStu_data})
+            db[userRole].insert_one(userData)
 
             return jsonify({"message":"added user data succesfully","status":"OK"})
         
@@ -89,16 +77,9 @@ def insert_user():
 
         elif userRole == "Teachers" and not db[userRole].find_one({"dataUserId":userData["dataUserId"]}):
 
-            print("techer emter")
-            extraTea_data={
-                        "isSess":{
-                                "status":False,
-                                "sessional_year":None,
-                                "sess_users":[]
-                        }
-            }
+            print("techer emter",userData)
 
-            db[userRole].insert_one({**userData,**extraTea_data})
+            db[userRole].insert_one(userData)
             return jsonify({"message":"added user data succesfully","status":"OK"})
 
         else:
@@ -122,7 +103,7 @@ def login():
 
     password = data['password']
     
-    student_paw = db["Students"].find_one({"dataUserId":data['id']},{"password":1,"role":1,"name":1,"course":1})
+    student_paw = db["Students"].find_one({"dataUserId":data['id']},{"password":1,"role":1,"name":1,"course":1,"email":1})
 
     teacher_paw = db["Teachers"].find_one({"dataUserId":data['id']},{"password":1,"role":1,"name":1,"course":1,"isSess":1})
 
@@ -137,7 +118,23 @@ def login():
 
 
     if user["password"] and user["password"] == password:
-        response = make_response(
+        response = ""
+        print(user)
+        if user['role'] == "Students":
+            print("student enter")
+            response = make_response(
+            jsonify(
+                {"message":"login successfull",
+                 "status":"OK",
+                 "role":user['role'],
+                 "course":user["course"],
+                 "email":user["email"],
+                 "name":user["name"]
+                 }))
+        
+        else:
+            print("teacher enter")
+            response = make_response(
             jsonify(
                 {"message":"login successfull",
                  "status":"OK",
@@ -147,11 +144,13 @@ def login():
                  "name":user["name"]
                  }))
         
+        
+        
         response.set_cookie("access_token_cookie",access_token,httponly=True,secure=True,samesite="None",max_age=3600)
         return response
 
     else:
-        return jsonify({"message":"wrong password","status":"notFound"})
+        return jsonify({"message":"invalid password","status":"notFound"})
     
 
 
@@ -206,6 +205,41 @@ def logout():
     response.set_cookie("access_token_cookie",access_token,httponly=True,secure=True,samesite="None",max_age=0)
     # unset_jwt_cookies(res)
     return response
+
+
+
+@app.route("/getAttedance",methods=["GET","POST"])
+def otherUserRead():
+    # the args of this endpoint are
+    # role -> student or teacher
+    # course ->user course
+    # rollnum -> student roll number
+    role,course = request.args.get("role"),request.args.get("course")
+    print(role,course)
+    if role == "Students" and request.method == "GET":
+        RollNum = request.args.get("rollNum")
+        print(type(RollNum))
+        user =  db["Teachers"].find({"isSess.sess_users":(RollNum),"course":course},{"_id":0,"isSess.QrCodeData":1})
+        response = dumps({"message":"user found","status":"OK","value":user}) if user!=[] else jsonify({"message":"usernot found","status":"notexist"})
+        print(response)
+        return response
+    
+    if request.method == "POST" and role == "Teachers":
+
+        print("teacher enters")
+        rollNumCollection = [str(i) for i in request.json]
+
+        users =  db["Students"].find({"dataUserId":{"$in":rollNumCollection},"course":course},{"_id":0,"name":1,"dataUserId":1,"attendance_status":1})
+        
+
+        res =   dumps({"message":"users found","status":"OK","value":users}) if rollNumCollection!=[] else jsonify({"message":"user not found","status":"notexist"})
+
+        print(res)
+        return res
+        
+
+
+        
 
 
 # ...........glbal call............
