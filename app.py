@@ -173,7 +173,7 @@ def update():
     if result.matched_count == 0:
         return jsonify({"message":"user dosnt exist ","status":"notFound"})
 
-    if result.modified_count > 0:
+    if result.modified_count >= 0:
         return jsonify({"message":"updated succefully","status":"OK"})
     
     return jsonify({"message":"wrong requess","status":"error"})
