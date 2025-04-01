@@ -103,7 +103,7 @@ def login():
 
     password = data['password']
     
-    student_paw = db["Students"].find_one({"dataUserId":data['id']},{"password":1,"role":1,"name":1,"course":1,"email":1})
+    student_paw = db["Students"].find_one({"dataUserId":data['id']},{"password":1,"role":1,"name":1,"course":1,"email":1,"dataUserId":1})
 
     teacher_paw = db["Teachers"].find_one({"dataUserId":data['id']},{"password":1,"role":1,"name":1,"course":1,"isSess":1})
 
