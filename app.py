@@ -129,7 +129,8 @@ def login():
                  "role":user['role'],
                  "course":user["course"],
                  "email":user["email"],
-                 "name":user["name"]
+                 "name":user["name"],
+                 "id":user["dataUserId"]
                  }))
         
         else:
