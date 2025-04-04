@@ -228,7 +228,7 @@ def otherUserRead():
     if request.method == "POST" and role == "Teachers":
 
         print("teacher enters")
-        rollNumCollection = [str(i) for i in request.json]
+        rollNumCollection = request.json
 
         users =  db["Students"].find({"dataUserId":{"$in":rollNumCollection},"course":course},{"_id":0,"name":1,"dataUserId":1,"attendance_status":1})
         
