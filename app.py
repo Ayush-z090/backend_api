@@ -230,7 +230,7 @@ def otherUserRead():
         print("teacher enters")
         rollNumCollection = request.json
 
-        users =  db["Students"].find({"dataUserId":{"$in":rollNumCollection[0]},"course":course},{"_id":0,"name":1,"dataUserId":1,"attendance_status":1})
+        users =  db["Students"].find({"dataUserId":{"$in":rollNumCollection},"course":course},{"_id":0,"name":1,"dataUserId":1,"attendance_status":1})
 
         res =   dumps({"message":"users found","status":"OK","value":users}) if rollNumCollection!=[] else jsonify({"message":"user not found","status":"notexist"})
 
